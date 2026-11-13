@@ -386,8 +386,14 @@ function resolveDraggedOrders(input: {
   readonly workingShelfEnabled: boolean;
   readonly windowProjectKey: string | null;
 }): typeof NO_DRAGGED_ORDERS {
-  const { drag, threadByKey, settledThreads, activeThreads, workingShelfEnabled, windowProjectKey } =
-    input;
+  const {
+    drag,
+    threadByKey,
+    settledThreads,
+    activeThreads,
+    workingShelfEnabled,
+    windowProjectKey,
+  } = input;
   const thread = threadByKey.get(drag.activeKey);
   if (thread === undefined) return NO_DRAGGED_ORDERS;
   const others = (list: readonly EnvironmentThreadShell[]) =>
