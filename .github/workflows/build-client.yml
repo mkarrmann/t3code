@@ -1,0 +1,61 @@
+name: Build patched client
+
+# Builds the web client of an upstream T3 Code stable release with this fork's
+# patches (the mk/v* branches) and publishes it as a release. See README.md.
+on:
+  schedule:
+    - cron: "23 13 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Upstream version to build, such as 0.1.7 (default: the latest stable release)"
+        required: false
+      force:
+        description: "Build even if a release for this version and patch set exists"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-client
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout this branch's scripts
+        uses: actions/checkout@v5
+        with:
+          path: .fork-ci
+
+      - name: Check out the release with the patches
+        id: prepare
+        run: .fork-ci/ci/prepare.sh
+        env:
+          VERSION: ${{ inputs.version }}
+          FORCE: ${{ inputs.force }}
+
+      - name: Setup dependencies
+        if: steps.prepare.outputs.skip != 'true'
+        uses: ./.github/actions/setup-ci-deps
+        with:
+          install-args: --filter=@t3tools/web...
+
+      - name: Test
+        if: steps.prepare.outputs.skip != 'true'
+        run: .fork-ci/ci/test.sh "${{ steps.prepare.outputs.base }}"
+
+      - name: Build and publish
+        if: steps.prepare.outputs.skip != 'true'
+        run: .fork-ci/ci/publish.sh
+        env:
+          VERSION: ${{ steps.prepare.outputs.version }}
+          TAG: ${{ steps.prepare.outputs.tag }}
+          BASE: ${{ steps.prepare.outputs.base }}
+          SOURCE: ${{ steps.prepare.outputs.source }}
