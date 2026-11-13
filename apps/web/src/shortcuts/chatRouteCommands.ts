@@ -29,6 +29,7 @@ import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../termina
 import { useThreadSelectionStore } from "../threadSelectionStore";
 import { resolveThreadRouteTarget } from "../threadRoutes";
 import { useUiStateStore } from "../uiStateStore";
+import { resolveWindowProjectRef } from "../fork/windowProject";
 import { type CommandHandler, registerCommands } from "./dispatcher";
 
 const CHAT_ROUTE_ID = "/_chat";
@@ -104,6 +105,15 @@ export function installChatRouteCommands(router: AnyRouter): () => void {
 
   const startNewLocal: CommandHandler = (event) => {
     claim(event);
+    // Fork: the window's own project, whatever thread or draft is on screen.
+    const windowProject = resolveWindowProjectRef(
+      readProjects(),
+      useUiStateStore.getState().projectOrder,
+    );
+    if (windowProject !== null) {
+      void handleNewThread(windowProject);
+      return;
+    }
     // With no current or open project, such as when every project is archived, pick one.
     void startNewThreadFromContext(readThreadContext()).then((started) => {
       if (!started) openCommandPalette({ open: "new-thread-in" });
