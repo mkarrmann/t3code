@@ -2,7 +2,7 @@ import { EnvironmentId, ProjectId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { legacyProjectCwdPreferenceKey } from "../uiStateStore";
-import { resolveWindowProjectRef, windowProjectFirst } from "./windowProject";
+import { groupByProject, resolveWindowProjectRef } from "./windowProject";
 
 const envA = EnvironmentId.make("env-a");
 const envB = EnvironmentId.make("env-b");
@@ -59,7 +59,7 @@ describe("resolveWindowProjectRef", () => {
   });
 });
 
-describe("windowProjectFirst", () => {
+describe("groupByProject", () => {
   const thread = (name: string, environmentId: EnvironmentId, projectId: string) => ({
     name,
     environmentId,
@@ -68,22 +68,20 @@ describe("windowProjectFirst", () => {
   const threads = [
     thread("a", envA, "p3"),
     thread("b", envA, "p1"),
-    thread("c", envB, "p2"),
+    thread("c", envB, "p1"),
     thread("d", envA, "p1"),
     thread("e", envA, "p3"),
+    thread("f", envB, "p1"),
   ];
+  const names = (sorted: ReadonlyArray<{ name: string }>) => sorted.map((t) => t.name);
 
-  it("moves the window project's threads up, keeping each part's order", () => {
-    expect(windowProjectFirst(threads, "env-a:p1").map((t) => t.name)).toEqual([
-      "b",
-      "d",
-      "a",
-      "c",
-      "e",
-    ]);
+  it("puts the window project first, then each project where its first thread falls", () => {
+    expect(names(groupByProject(threads, "env-a:p1"))).toEqual(["b", "d", "a", "e", "c", "f"]);
   });
 
-  it("leaves the order alone without a window project", () => {
-    expect(windowProjectFirst(threads, null).map((t) => t.name)).toEqual(["a", "b", "c", "d", "e"]);
+  it("groups by project alone without a window project, or one with no threads here", () => {
+    const expected = ["a", "e", "b", "d", "c", "f"];
+    expect(names(groupByProject(threads, null))).toEqual(expected);
+    expect(names(groupByProject(threads, "env-b:p9"))).toEqual(expected);
   });
 });

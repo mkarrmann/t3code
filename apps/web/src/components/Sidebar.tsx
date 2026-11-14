@@ -116,7 +116,7 @@ import {
   type SidebarProjectSnapshot,
 } from "../sidebarProjectGrouping";
 import { resolveProjectExpanded, useUiStateStore } from "../uiStateStore";
-import { useWindowProjectKey, windowProjectFirst } from "../fork/windowProject";
+import { useWindowProjectKey, groupByProject } from "../fork/windowProject";
 import {
   getThreadKeysToDeselectAfterDelete,
   useThreadSelectionStore,
@@ -406,7 +406,7 @@ function resolveDraggedOrders(input: {
       applySidebarThreadDrop(thread, "settled", drag.occurredAt),
     ]).map(threadShellKey),
     activeOrder: workingShelfEnabled
-      ? windowProjectFirst(
+      ? groupByProject(
           sortInboxThreadsByReturn(
             [...others(activeThreads), applySidebarThreadDrop(thread, "active", drag.occurredAt)],
             inboxReturns.returnedAt,
@@ -717,7 +717,7 @@ function partitionSidebarThreads(input: SidebarThreadPartitionInput) {
   const sortedActive = sortActiveBySend
     ? sortWorkingThreadsBySend(active)
     : workingShelfEnabled
-      ? windowProjectFirst(
+      ? groupByProject(
           sortInboxThreadsByReturn(active, inboxObservation.returnedAt),
           windowProjectKey,
         )
@@ -741,7 +741,7 @@ function partitionSidebarThreads(input: SidebarThreadPartitionInput) {
             preferredIds: optimisticDrop.order,
             getId: (thread) => scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
           }),
-    workingThreads: windowProjectFirst(sortWorkingThreadsBySend(working), windowProjectKey),
+    workingThreads: groupByProject(sortWorkingThreadsBySend(working), windowProjectKey),
     snoozedThreads: snoozed.toSorted(
       (left, right) =>
         firstValidTimestampMs(left.snoozedUntil ?? null) -
