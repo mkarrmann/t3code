@@ -42,16 +42,20 @@ export function useWindowProjectKey(): string | null {
   return ref === null ? null : scopedProjectKey(ref);
 }
 
-/** THREADS with the window project's first, each part in its own order. */
-export function windowProjectFirst<
+/**
+ * THREADS grouped by project: the window project's first, then each other
+ * project where its first thread falls. Order within a project is unchanged.
+ */
+export function groupByProject<
   T extends { readonly environmentId: EnvironmentId; readonly projectId: ProjectId },
 >(threads: readonly T[], windowProjectKey: string | null): T[] {
-  if (windowProjectKey === null) return [...threads];
-  const own: T[] = [];
-  const rest: T[] = [];
+  const groups = new Map<string, T[]>();
+  if (windowProjectKey !== null) groups.set(windowProjectKey, []);
   for (const thread of threads) {
     const key = scopedProjectKey(scopeProjectRef(thread.environmentId, thread.projectId));
-    (key === windowProjectKey ? own : rest).push(thread);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [thread]);
+    else group.push(thread);
   }
-  return [...own, ...rest];
+  return [...groups.values()].flat();
 }
