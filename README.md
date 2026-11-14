@@ -7,9 +7,10 @@ upstream release tag plus the patch commits.
 
 ## Patches
 
-- The window's project (the first project in its manual project order, which
-  the dotfiles' `t3-window-scope` sets per window) lists its threads first in
-  the sidebar's time-ordered Active section and in Working.
+- The sidebar's time-ordered Active section and Working are grouped by
+  project: the window's project (the first project in its manual project
+  order, which the dotfiles' `t3-window-scope` sets per window) first, then
+  each other project where its most recent thread falls.
 - New thread here (`chat.newLocal`) starts in the window's project rather than
   the project of the thread on screen.
 
